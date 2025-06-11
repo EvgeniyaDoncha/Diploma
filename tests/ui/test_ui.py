@@ -1,7 +1,7 @@
 import allure
 import pytest
 
-from tests.ui.pages.main_page import MainPage
+from pages.main_page import MainPage
 
 @allure.epic("UI Tests")
 @allure.feature("Search")
