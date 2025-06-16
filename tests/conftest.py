@@ -20,7 +20,7 @@ def driver():
     def driver():
 
             options = webdriver.ChromeOptions()
-            "options.add_argument("--headless")"# если запускаешь без UI
+            # options.add_argument("--headless")  # если запускаешь без UI
 
 
             driver = webdriver.Remote(
