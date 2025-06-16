@@ -15,10 +15,10 @@ def base_ui_url():
 
 
 @pytest.fixture(scope="function")
+@pytest.fixture(scope="function")
 def driver():
     options = Options()
-    # Раскомментируй следующую строку, чтобы запускать без UI
-    # options.add_argument("--headless")
+    # options.add_argument("--headless")  # для запуска без UI
 
     capabilities = {
         "browserName": "chrome",
@@ -32,13 +32,18 @@ def driver():
     for key, value in capabilities.items():
         options.set_capability(key, value)
 
-    driver = webdriver.Remote(
-        command_executor="https://user1:1234@selenoid.autotests.cloud/wd/hub",
-        options=options
-    )
-
-    yield driver
-    driver.quit()
+    try:
+        driver = webdriver.Remote(
+            command_executor="https://user1:1234@selenoid.autotests.cloud/wd/hub",
+            options=options
+        )
+        yield driver
+    except Exception as e:
+        pytest.fail(f"Не удалось инициализировать драйвер: {e}")
+    finally:
+        try:
+            driver.quit()
+        except Exception:
 
 
 @pytest.hookimpl(hookwrapper=True)
