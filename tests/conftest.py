@@ -1,82 +1,70 @@
-import allure
-import os
-from selenium import webdriver
-from selenium import webdriver
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.webdriver.chrome.options import Options
 import pytest
+import allure
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 
 @pytest.fixture(scope="session")
 def base_api_url():
-    return "https://reqres.in/api"  # пример тестового API
+    return "https://reqres.in/api"
+
 
 @pytest.fixture(scope="session")
 def base_ui_url():
-    return "https://www.python.org"  # тестовый сайт для UI
+    return "https://www.python.org"
+
 
 @pytest.fixture(scope="function")
 def driver():
-    def driver():
+    options = Options()
+    # Раскомментируй следующую строку, чтобы запускать без UI
+    # options.add_argument("--headless")
 
-            options = webdriver.ChromeOptions()
-            # options.add_argument("--headless")  # если запускаешь без UI
-
-
-            driver = webdriver.Remote(
-                command_executor="https://user1:1234@selenoid.autotests.cloud/wd/hub",
-                options=options
-            )
-            yield driver
-            driver.quit()
-    SELENOID_URL = "https://user1:1234@selenoid.autotests.cloud/wd/hub"  # замени на свой URL
-
-    @pytest.fixture(scope="function")
-    def driver(request):
-        options = Options()
-        selenoid_capabilities = {
-            "browserName": "chrome",
-            "browserVersion": "100.0",
-            "selenoid:options": {
-                "enableVNC": True,
-                "enableVideo": False
-            }
+    capabilities = {
+        "browserName": "chrome",
+        "browserVersion": "100.0",
+        "selenoid:options": {
+            "enableVNC": True,
+            "enableVideo": True
         }
+    }
 
-        from turtle import update
-        options.capabilities, update(selenoid_capabilities)
-        driver = webdriver.Remote(
-            command_executor=f"https://user1:1234@selenoid.autotests.cloud/wd/hub",
-            options=options)
+    for key, value in capabilities.items():
+        options.set_capability(key, value)
 
-        from idlelib import browser
-        browser.config.driver = driver
+    driver = webdriver.Remote(
+        command_executor="https://user1:1234@selenoid.autotests.cloud/wd/hub",
+        options=options
+    )
 
-    @pytest.hookimpl(hookwrapper=True)
-    def pytest_runtest_makereport(item, call):
-        # Получаем результат теста
-        outcome = yield
-        rep = outcome.get_result()
+    yield driver
+    driver.quit()
 
-        driver = item.funcargs.get("driver")
 
-        if driver:
-            session_id = driver.session_id
-            video_url = f"http://selenoid.yourdomain.com:4444/video/{session_id}.mp4"
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    # Получаем результат теста
+    outcome = yield
+    rep = outcome.get_result()
 
-        if rep.when == "call" and rep.failed and driver:
-            allure.attach(driver.get_screenshot_as_png(),
-                          name="screenshot",
-                          attachment_type=allure.attachment_type.PNG)
-            try:
-                logs = driver.get_log('browser')
-                log_text = "\n".join([f"{entry['level']} - {entry['message']}" for entry in logs])
-                allure.attach(log_text, name="browser logs", attachment_type=allure.attachment_type.TEXT)
-            except Exception as e:
-                print(f"Не удалось получить логи браузера: {e}")
+    driver = item.funcargs.get("driver", None)
 
-            allure.attach(video_url,
-                          name="Video",
-                          attachment_type=allure.attachment_type.URI_LIST)
+    if rep.when == "call" and rep.failed and driver:
+        session_id = driver.session_id
+        video_url = f"https://selenoid.autotests.cloud/video/{session_id}.mp4"
 
-    # Вставляй этот код в конец своего conftest.py, не удаляя остального.
+        # Скриншот
+        allure.attach(driver.get_screenshot_as_png(),
+                      name="screenshot",
+                      attachment_type=allure.attachment_type.PNG)
+
+        # Логи браузера
+        try:
+            logs = driver.get_log('browser')
+            log_text = "\n".join([f"{entry['level']} - {entry['message']}" for entry in logs])
+            allure.attach(log_text, name="browser logs", attachment_type=allure.attachment_type.TEXT)
+        except Exception as e:
+            print(f"Не удалось получить логи браузера: {e}")
+
+        # Видеозапись
+        allure.attach(video_url, name="Video", attachment_type=allure.attachment_type.URI_LIST)
