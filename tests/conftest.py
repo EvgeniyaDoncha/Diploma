@@ -1,3 +1,4 @@
+import allure
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -25,7 +26,7 @@ def driver():
 
     driver.quit()
 
-    SELENOID_URL = "http://selenoid.yourdomain.com:4444/wd/hub"  # замени на свой URL
+    SELENOID_URL = "https://user1:1234@selenoid.autotests.cloud/wd/hub"  # замени на свой URL
 
     @pytest.fixture(scope="function")
     def driver(request):
