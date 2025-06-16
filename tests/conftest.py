@@ -1,8 +1,8 @@
 import allure
 import os
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.chrome.options import Options
 import pytest
 
@@ -17,15 +17,18 @@ def base_ui_url():
 
 @pytest.fixture(scope="function")
 def driver():
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--window-size=1920,1080")
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
-    yield driver
-    driver.quit()
+    def driver():
+        capabilities = DesiredCapabilities.CHROME.copy()
+        # Опционально: настройки, например, версия браузера
+        # capabilities['version'] = '114.0'
+        driver = webdriver.Remote(
+            command_executor='https://user1:1234@selenoid.autotests.cloud/wd/hub',
+            desired_capabilities=capabilities
+        )
+        yield driver
+        driver.quit()
 
-    SELENOID_URL = "https://user1:1234@selenoid.autotests.cloud/wd/hub"  # замени на свой URL
+
 
     @pytest.fixture(scope="function")
     def driver(request):
