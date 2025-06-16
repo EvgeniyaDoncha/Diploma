@@ -6,3 +6,4 @@ pytest-selenium==4.1.0
 pytest-xdist==3.7.0
 jsonschema==4.21.1
 webdriver-manager==4.0.1
+selene==2.0.0rc9

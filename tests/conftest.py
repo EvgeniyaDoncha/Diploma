@@ -15,12 +15,10 @@ def base_ui_url():
 
 
 @pytest.fixture(scope="function")
-@pytest.fixture(scope="function")
-def driver():
+def setup_browser(request):
+    from selene.webdriver.chrome.options import Options
     options = Options()
-    # options.add_argument("--headless")  # для запуска без UI
-
-    capabilities = {
+    selenoid_capabilities = {
         "browserName": "chrome",
         "browserVersion": "100.0",
         "selenoid:options": {
@@ -28,48 +26,42 @@ def driver():
             "enableVideo": True
         }
     }
+    options.capabilities.update(selenoid_capabilities)
+    from selene.support import webdriver
+    driver = webdriver.Remote(
+        command_executor=f"https://user1:1234@selenoid.autotests.cloud/wd/hub",
+        options=options
+    )
 
-    for key, value in capabilities.items():
-        options.set_capability(key, value)
-
-    try:
-        driver = webdriver.Remote(
-            command_executor="https://user1:1234@selenoid.autotests.cloud/wd/hub",
-            options=options
-        )
-        yield driver
-    except Exception as e:
-        pytest.fail(f"Не удалось инициализировать драйвер: {e}")
-    finally:
-        try:
-            driver.quit()
-        except Exception:
+    from selene import Browser
+    from selene import Config
+    browser = Browser(Config(driver))
+    yield browser
 
 
 @pytest.hookimpl(hookwrapper=True)
+
 def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()
 
     driver = item.funcargs.get("driver", None)
-
     if rep.when == "call" and rep.failed and driver:
         session_id = driver.session_id
         video_url = f"https://selenoid.autotests.cloud/video/{session_id}.mp4"
 
-        # Скриншот
-        allure.attach(driver.get_screenshot_as_png(),
-                      name="screenshot",
-                      attachment_type=allure.attachment_type.PNG)
-
-        # Логи браузера
         try:
-            logs = driver.get_log('browser')
+            allure.attach(driver.get_screenshot_as_png(),
+                          name="screenshot",
+                          attachment_type=allure.attachment_type.PNG)
+        except Exception:
+            pass
+
+        try:
+            logs = driver.get_log("browser")
             log_text = "\n".join([f"{entry['level']} - {entry['message']}" for entry in logs])
             allure.attach(log_text, name="browser logs", attachment_type=allure.attachment_type.TEXT)
-        except Exception as e:
-            print(f"Не удалось получить логи браузера: {e}")
+        except Exception:
+            pass
 
-        # Видео (ссылка)
         allure.attach(video_url, name="Video", attachment_type=allure.attachment_type.URI_LIST)
-        print(f"Видео сессии доступно по адресу: {video_url}")
