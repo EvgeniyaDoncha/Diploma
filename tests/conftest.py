@@ -18,17 +18,16 @@ def base_ui_url():
 @pytest.fixture(scope="function")
 def driver():
     def driver():
-        capabilities = DesiredCapabilities.CHROME.copy()
-        # Опционально: настройки, например, версия браузера
-        # capabilities['version'] = '114.0'
-        driver = webdriver.Remote(
-            command_executor='https://user1:1234@selenoid.autotests.cloud/wd/hub',
-            desired_capabilities=capabilities
-        )
-        yield driver
-        driver.quit()
-
-
+        def driver():
+            options = webdriver.ChromeOptions()
+            options.add_argument("--headless")  # если запускаешь без UI
+            driver = webdriver.Remote(
+                command_executor="https://user1:1234@selenoid.autotests.cloud/wd/hub",
+                options=options
+            )
+            yield driver
+            driver.quit()
+    SELENOID_URL = "https://user1:1234@selenoid.autotests.cloud/wd/hub"  # замени на свой URL
 
     @pytest.fixture(scope="function")
     def driver(request):
