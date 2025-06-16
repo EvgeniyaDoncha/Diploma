@@ -18,7 +18,7 @@ def base_ui_url():
 @pytest.fixture(scope="function")
 def driver():
     def driver():
-        def driver():
+
             options = webdriver.ChromeOptions()
             options.add_argument("--headless")  # если запускаешь без UI
             driver = webdriver.Remote(
@@ -31,17 +31,24 @@ def driver():
 
     @pytest.fixture(scope="function")
     def driver(request):
-        capabilities = {
+        options = Options()
+        selenoid_capabilities = {
             "browserName": "chrome",
-            "browserVersion": "115.0",
+            "browserVersion": "100.0",
             "selenoid:options": {
                 "enableVNC": True,
-                "enableVideo": True,
+                "enableVideo": False
             }
         }
-        driver = webdriver.Remote(command_executor=SELENOID_URL, desired_capabilities=capabilities)
-        yield driver
-        driver.quit()
+
+        from turtle import update
+        options.capabilities, update(selenoid_capabilities)
+        driver = webdriver.Remote(
+            command_executor=f"https://user1:1234@selenoid.autotests.cloud/wd/hub",
+            options=options)
+
+        from idlelib import browser
+        browser.config.driver = driver
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(item, call):
