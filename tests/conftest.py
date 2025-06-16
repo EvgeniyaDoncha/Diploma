@@ -43,7 +43,6 @@ def driver():
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
-    # Получаем результат теста
     outcome = yield
     rep = outcome.get_result()
 
@@ -66,5 +65,6 @@ def pytest_runtest_makereport(item, call):
         except Exception as e:
             print(f"Не удалось получить логи браузера: {e}")
 
-        # Видеозапись
+        # Видео (ссылка)
         allure.attach(video_url, name="Video", attachment_type=allure.attachment_type.URI_LIST)
+        print(f"Видео сессии доступно по адресу: {video_url}")
