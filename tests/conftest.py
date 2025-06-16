@@ -1,9 +1,11 @@
 import allure
-import pytest
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.chrome.options import Options
 import os
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
+import pytest
+
 
 @pytest.fixture(scope="session")
 def base_api_url():
@@ -16,14 +18,11 @@ def base_ui_url():
 @pytest.fixture(scope="function")
 def driver():
     options = Options()
-    options.add_argument("--headless")  # без GUI
+    options.add_argument("--headless")
     options.add_argument("--window-size=1920,1080")
-
-    service = ChromeService()
+    service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
-
     yield driver
-
     driver.quit()
 
     SELENOID_URL = "https://user1:1234@selenoid.autotests.cloud/wd/hub"  # замени на свой URL
