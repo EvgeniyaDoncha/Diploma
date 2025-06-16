@@ -58,7 +58,7 @@ def driver():
         outcome = yield
         rep = outcome.get_result()
 
-        driver = item.funcargs.get("driver", None)
+        driver = item.funcargs.get("driver")
 
         if driver:
             session_id = driver.session_id
